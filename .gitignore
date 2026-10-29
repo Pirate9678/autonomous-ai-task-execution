@@ -1,0 +1,16 @@
+# Pipeline artefacts (regenerated every run)
+output/*.csv
+
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
