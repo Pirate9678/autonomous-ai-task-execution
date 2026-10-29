@@ -1,0 +1,62 @@
+ticket_id,subject,description,region,channel,ai_category,ai_sentiment,ai_priority,ai_action_required,ai_confidence,ai_valid
+TKT-1001,Invoice charged twice,"I was charged twice for my March invoice. This is unacceptable, please refund immediately.",Delhi,email,billing,negative,urgent,True,0.95,True
+TKT-1002,Login not working,Getting error 500 every time I try to login since yesterday morning.,Mumbai,web,technical,neutral,medium,False,0.95,True
+TKT-1003,Package arrived late,My package was supposed to arrive on Monday but still no tracking update.,Gurugram,phone,logistics,neutral,medium,False,0.95,True
+TKT-1004,Feature request: dark mode,Love the product! Would be great to have a dark mode option.,Bengaluru,web,feedback,positive,low,False,0.95,True
+TKT-1005,Cancel my subscription,I want to cancel my subscription effective immediately. Too expensive.,Noida,email,account,negative,medium,True,0.95,True
+TKT-1006,Refund not received,Refund was promised 10 days ago but the amount is still not credited to my account.,Chandigarh,phone,billing,neutral,medium,False,0.95,True
+TKT-1007,App crashes on checkout,The mobile app crashes every time I tap pay. Very frustrating experience.,Delhi,web,technical,negative,high,True,0.95,True
+TKT-1008,[no subject],URGENT: entire dashboard is down for our team. We cannot work at all.,Gujarat,email,unknown,negative,urgent,True,0.55,False
+TKT-1009,Password reset link expired,Reset link expired twice. Please help me regain access to my account.,Uttar Pradesh,web,account,neutral,medium,False,0.95,True
+TKT-1010,Wrong item delivered,Received the wrong item in my shipment. Need the correct one dispatched ASAP.,Haryana,phone,logistics,negative,medium,True,0.95,True
+TKT-1011,Billing address update,Need to update the billing address on my account before the next invoice.,Delhi,email,billing,neutral,medium,False,0.95,True
+TKT-1012,Thank you for quick support,Just wanted to say the support team resolved my issue quickly. Excellent service!,Chandigarh,web,unknown,positive,medium,False,0.55,True
+TKT-1013,API timeout errors,Our integration is getting timeout errors from your API since 2pm. This is urgent.,Bengaluru,email,technical,negative,high,True,0.95,True
+TKT-1014,Subscription renewal failed,My card was charged but the renewal failed and my plan shows expired.,Noida,web,billing,neutral,medium,False,0.95,True
+TKT-1015,Where is my order?,"Order placed 8 days ago, no dispatch notification yet. Please check.",Gujarat,phone,logistics,neutral,medium,False,0.95,True
+TKT-1016,Invoice charged twice,"I was charged twice for my March invoice. This is unacceptable, please refund immediately.",Delhi,email,billing,negative,urgent,True,0.95,True
+TKT-1017,[no subject],[no description],Unknown,unknown,unknown,neutral,medium,False,0.55,True
+TKT-1018,Suggestion: bulk export,It would improve our workflow if we could bulk export reports as CSV.,Mumbai,web,feedback,neutral,low,False,0.95,True
+TKT-1019,Unauthorised transaction,"There is an unauthorised charge of Rs 4,999 on my card that I did not make.",Delhi,email,billing,neutral,urgent,True,0.95,True
+TKT-1020,Server outage in eu region,"Complete outage in the EU region, all our services are down. Fix immediately!",Bengaluru,phone,technical,negative,urgent,True,0.95,True
+TKT-1021,Change of plan,I want to upgrade from basic to pro plan starting next month.,Uttar Pradesh,web,account,neutral,medium,False,0.95,True
+TKT-1022,Delivery address wrong,The courier delivered to the wrong address. Please arrange redelivery.,Gurgaon,email,logistics,neutral,medium,False,0.95,True
+TKT-1023,Payment gateway error,Payment fails at the gateway with a generic error. Tried three cards.,Chandigarh,web,billing,neutral,medium,False,0.95,True
+TKT-1024,How to download invoice?,Can someone tell me how to download my invoice for last month?,Noida,chat,billing,neutral,urgent,True,0.95,True
+TKT-1025,Terrible onboarding experience,The onboarding was the worst I have seen. Nothing works as documented. Very disappointed.,Haryana,email,unknown,negative,medium,True,0.55,False
+TKT-1026,Data export missing rows,The exported report is missing rows compared to the dashboard. Please investigate.,Delhi,web,unknown,neutral,medium,False,0.55,True
+TKT-1027,Profile picture not uploading,Uploading a profile picture fails silently. Tried jpg and png.,Mumbai,chat,account,neutral,medium,False,0.95,True
+TKT-1028,Overcharged on renewal,I was charged the annual price instead of monthly on renewal. Please correct this.,Gujarat,email,billing,neutral,medium,False,0.95,True
+TKT-1029,Shipment stuck in transit,Tracking shows my shipment stuck in transit for 5 days with no movement.,Uttarakhand,phone,logistics,neutral,medium,False,0.95,True
+TKT-1030,Feedback on new dashboard,The new dashboard looks great and loads much faster. Happy with the update!,Bengaluru,web,feedback,positive,low,False,0.95,True
+TKT-1031,Account locked,My account got locked after too many login attempts. Need it unlocked urgently.,Noida,email,account,negative,medium,True,0.95,True
+TKT-1032,Double charge on card,My card shows a double charge for the same order. This needs immediate correction.,Delhi,phone,billing,neutral,urgent,True,0.95,True
+TKT-1033,When will the feature ship?,Any update on when the SSO feature will ship? Our team is waiting.,Chandigarh,web,unknown,neutral,medium,False,0.55,True
+TKT-1034,Broken link in email,The reset password link in your email is broken and leads to a 404 page.,Haryana,email,technical,neutral,medium,False,0.95,True
+TKT-1035,Courier damaged package,The package arrived with the box torn and the item scratched.,Gurugram,phone,logistics,neutral,medium,False,0.95,True
+TKT-1036,Upgrade failed mid-way,Tried upgrading my plan and it failed mid-way. Now I am charged but still on basic.,Mumbai,web,billing,neutral,medium,False,0.95,True
+TKT-1037,Invoice charged twice,"I was charged twice for my March invoice. This is unacceptable, please refund immediately.",Delhi,email,billing,negative,urgent,True,0.95,True
+TKT-1038,Love the new mobile app,"The new mobile app is awesome, everything is so smooth now. Thank you team!",Bengaluru,chat,feedback,positive,low,False,0.95,True
+TKT-1039,Slow page loads,Pages take over 20 seconds to load since this morning. Please check your servers.,Noida,web,technical,neutral,medium,False,0.95,True
+TKT-1040,Cancel order,I need to cancel order #88213 before it ships. Please confirm cancellation.,Gujarat,email,account,neutral,medium,False,0.95,True
+TKT-1041,Price mismatch at checkout,The price at checkout was higher than the listed price. Feels like a bait and switch.,Delhi,web,billing,neutral,medium,False,0.95,True
+TKT-1042,Tracking number invalid,The tracking number you sent shows invalid on the courier website.,Uttar Pradesh,phone,logistics,neutral,medium,False,0.95,True
+TKT-1043,Two-factor auth not working,I am not receiving the two-factor codes on my phone. Cannot log in.,Chandigarh,email,technical,neutral,medium,False,0.95,True
+TKT-1044,Request: Hindi language support,"Please add Hindi language support, it would help our field team a lot.",Uttarakhand,web,unknown,neutral,medium,False,0.55,True
+TKT-1045,Charged after cancellation,I cancelled last month but was still charged this month. Refund immediately!,Haryana,phone,billing,negative,high,True,0.95,True
+TKT-1046,Webhook deliveries failing,Webhooks to our endpoint are failing with 502 errors since the deploy.,Bengaluru,email,logistics,neutral,medium,False,0.95,True
+TKT-1047,Missing loyalty points,My loyalty points from last quarter are missing from my account.,Noida,chat,account,neutral,medium,False,0.95,True
+TKT-1048,Delivery rescheduled twice,The courier rescheduled delivery twice without calling. Very poor experience.,Gurgaon,phone,logistics,neutral,medium,False,0.95,True
+TKT-1049,Great onboarding call,"Had a great onboarding call with Priya, she explained everything clearly. Thank you!",Delhi,web,unknown,positive,medium,False,0.55,True
+TKT-1050,Subscription downgrade,Please downgrade my subscription to the starter plan from next billing cycle.,Mumbai,email,billing,neutral,urgent,True,0.95,True
+TKT-1051,Payment declined incorrectly,My valid card keeps getting declined on your checkout page.,Chandigarh,web,billing,neutral,medium,False,0.95,True
+TKT-1052,Lost package,The courier marked my package as delivered but I never received it.,Gujarat,phone,logistics,neutral,medium,False,0.95,True
+TKT-1053,SSO login loop,SSO login keeps looping back to the login page. Our whole team is affected.,Bengaluru,email,technical,neutral,medium,False,0.95,True
+TKT-1054,Add more payment methods,It would be great if you added UPI autopay as a payment method.,Noida,web,billing,positive,medium,False,0.95,True
+TKT-1055,Invoice PDF corrupted,The invoice PDF I downloaded is corrupted and will not open.,Delhi,email,billing,neutral,urgent,True,0.95,True
+TKT-1056,Angry about hidden fees,I am furious about the hidden fees added to my bill. This is the worst billing experience ever.,Haryana,phone,billing,negative,high,True,0.95,True
+TKT-1057,App freezes on Android,The Android app freezes on the home screen after the latest update.,Mumbai,chat,logistics,neutral,medium,False,0.95,True
+TKT-1058,Change registered email,Need to change the registered email on my account to my new work address.,Uttar Pradesh,email,account,neutral,medium,False,0.95,True
+TKT-1059,Delayed refund,It has been 3 weeks and my refund is still pending. This is unacceptable.,Chandigarh,web,billing,negative,high,True,0.95,True
+TKT-1060,Positive: support was amazing,The support team was amazing and solved my complex issue in one call. Wonderful!,Bengaluru,chat,unknown,positive,medium,False,0.55,True
+TKT-1061,[no subject],[no description],Unknown,unknown,unknown,neutral,medium,False,0.55,True

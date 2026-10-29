@@ -1,0 +1,2 @@
+run_timestamp_utc,input_file,records_in,records_clean,records_out,records_dropped,errors,status
+2026-10-29T08:52:40Z,sample_input.csv,63,61,61,2,0,success
