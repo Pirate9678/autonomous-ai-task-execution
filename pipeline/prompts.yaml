@@ -1,0 +1,92 @@
+# Custom AI prompt templates used by the autonomous task execution pipeline.
+# Placeholder syntax: {{field_name}} is substituted with the record's value
+# before the prompt is sent to the LLM (production) or the deterministic
+# rule-based classifier (local simulation in ai_prompts.py).
+#
+# To customise a prompt, edit the `template` text. Keep the placeholders
+# exactly as written — the pipeline fills them in per record.
+
+prompts:
+  extraction:
+    name: "Field Extraction"
+    description: >
+      Normalise unstructured record text into a clean, structured set of
+      fields before any analysis runs. Used for records where the raw
+      description contains dates, names, or quantities written free-form.
+    template: |
+      You are a data-extraction assistant for operational analytics.
+      From the support ticket below, extract the following fields and return
+      ONLY valid JSON with keys: customer, product, date_mentioned, priority_hint.
+
+      Ticket ID: {{ticket_id}}
+      Subject: {{subject}}
+      Description: {{description}}
+
+      Rules:
+      - If a field cannot be found, use null.
+      - Normalise product names to lower-case.
+      - Return JSON only, no explanations.
+
+  classification:
+    name: "Analytical Classification"
+    description: >
+      Core analytical step: tags every record with a category, sentiment and
+      priority so downstream dashboards and routing rules can consume it
+      without human triage.
+    template: |
+      You are an analytics classifier for a customer support operation.
+      Classify the following ticket and return ONLY valid JSON with keys:
+      category, sentiment, priority, action_required.
+
+      Ticket ID: {{ticket_id}}
+      Subject: {{subject}}
+      Description: {{description}}
+      Region: {{region}}
+
+      Allowed values:
+      - category: billing | technical | logistics | account | feedback | unknown
+      - sentiment: positive | neutral | negative
+      - priority: low | medium | high | urgent
+      - action_required: true | false
+
+      Rules:
+      - Choose priority 'urgent' only if the customer reports a service
+        outage or a payment was charged incorrectly.
+      - 'action_required' is true when the issue needs human follow-up or
+        cannot be resolved by an automated reply.
+      - Return JSON only, no explanations.
+
+  summarisation:
+    name: "Record Summarisation"
+    description: >
+      Produces a one-line operational summary per record for the structured
+      spreadsheet output and executive run reports.
+    template: |
+      You are a business operations analyst.
+      Summarise the following ticket in ONE sentence (max 25 words),
+      focusing on the problem and its business impact. No bullet points.
+
+      Ticket ID: {{ticket_id}}
+      Subject: {{subject}}
+      Description: {{description}}
+
+  validation:
+    name: "Output Validation"
+    description: >
+      Self-check step: verifies the pipeline's own classification before the
+      record is committed to the structured spreadsheet. In production this
+      prompt runs against the LLM; locally the rule checks in ai_prompts.py
+      enforce the same invariants.
+    template: |
+      You are a QA reviewer for an automated data pipeline.
+      Review the classification below for ticket {{ticket_id}} and return
+      ONLY valid JSON with keys: valid, confidence, notes.
+
+      Classification: {{classification_json}}
+
+      Rules:
+      - 'valid' is false if category is 'unknown' while sentiment is
+        'negative' (a negative ticket must always get a concrete category).
+      - 'valid' is false if priority is 'urgent' but action_required is false.
+      - confidence is a number between 0 and 1.
+      - notes is a short string, max 20 words.
