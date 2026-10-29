@@ -1,0 +1,47 @@
+# docker-compose stack: n8n (with the repo baked in via deploy/Dockerfile)
+# plus a data volume for CSV artefacts.
+#
+# Start on the EC2 host (see deploy/ec2-setup.md):
+#     docker compose up -d --build
+#
+# n8n UI is then available at http://<EC2_PUBLIC_IP>:5678
+# Default login: admin / changeme  (override N8N_BASIC_AUTH_PASSWORD in .env)
+
+services:
+  n8n:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: ai-task-exec-n8n:latest
+    container_name: n8n-ai-task-exec
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # --- authentication (change before any public exposure) ---
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-changeme}
+      # --- execution tuning ---
+      - N8N_EXECUTIONS_DATA_SAVE_ON_ERROR=all
+      - N8N_EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
+      # --- timezone for the Schedule Trigger ---
+      - GENERIC_TIMEZONE=Asia/Kolkata
+      - TZ=Asia/Kolkata
+    volumes:
+      # n8n application data (workflows, credentials, execution history)
+      - n8n_data:/home/node/.n8n
+      # shared data volume: pipeline inputs land here, CSV outputs land here
+      - pipeline_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  n8n_data:
+    name: n8n-ai-task-exec-data
+  pipeline_data:
+    name: n8n-ai-task-exec-pipeline
