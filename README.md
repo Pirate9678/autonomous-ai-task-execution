@@ -78,7 +78,7 @@ Requirements: Python 3.8+ and nothing else — the pipeline uses only the
 standard library (`csv`, `argparse`, `logging`, `datetime`, `re`, `json`).
 
 ```bash
-git clone https://github.com/<YOUR_USERNAME>/autonomous-ai-task-execution.git
+git clone https://github.com/Pirate9678/autonomous-ai-task-execution.git
 cd autonomous-ai-task-execution
 
 # run the full pipeline on the sample data
@@ -95,6 +95,29 @@ records in, 1 junk row and 1 duplicate dropped) and an appended entry in
 > production, the n8n **AI Classification** node sends the same rendered
 > prompt to an LLM; `analyse_record_with_llm()` shows the equivalent
 > production code path.
+
+## Sample run output
+
+A completed run on the bundled sample data is committed under
+[`output/`](output/) so you can see the end-to-end result without running
+anything:
+
+- [`output/structured_report.csv`](output/structured_report.csv) — 61
+  enriched rows (63 records in, 1 junk row + 1 duplicate dropped).
+  Each row carries the AI enrichment columns:
+  `ai_category`, `ai_sentiment`, `ai_priority`, `ai_action_required`,
+  `ai_confidence`, `ai_valid`.
+- [`output/run_log.csv`](output/run_log.csv) — the audit entry for the
+  run (`2026-10-29T08:52:40Z, records_in=63, records_out=61, errors=0,
+  status=success`).
+
+Example enriched rows:
+
+| ticket_id | subject              | ai_category | ai_sentiment | ai_priority | ai_action_required |
+|-----------|----------------------|-------------|--------------|-------------|--------------------|
+| TKT-1001  | Invoice charged twice| billing     | negative     | urgent      | True               |
+| TKT-1002  | Login not working    | technical   | neutral      | medium      | False              |
+| TKT-1003  | Package arrived late | logistics   | neutral      | medium      | False              |
 
 ## Importing the workflow into n8n
 
