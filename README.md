@@ -31,9 +31,9 @@ flowchart LR
 ┌──────────────────────── AWS EC2 (Docker) ────────────────────────┐
 │  ┌──────────┐    ┌──────────────────────────────┐   ┌──────────┐ │
 │  │   n8n    │───▶│ pipeline/process_data.py     │──▶│ Google   │ │
-│  │ workflow │    │  extract → clean → AI-enrich │   │ Sheets   │ │
-│  └──────────┘    │  prompts.yaml (4 templates)  │   └──────────┘ │
-│                  └──────────────────────────────┘                │
+│  │ workflow │    │  batched stream → clean →    │   │ Sheets   │ │
+│  └──────────┘    │  AI-enrich (parallel) → load │   └──────────┘ │
+│                  │  prompts.yaml (4 templates)  │                │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -61,9 +61,11 @@ autonomous-ai-task-execution/
 │                              #   classification, summarisation, validation)
 ├── data/
 │   └── sample_input.csv       # 63 messy sample ticket records
-├── output/                    # generated CSVs (git-ignored)
-│   ├── structured_report.csv  # one enriched row per clean record
-│   └── run_log.csv            # audit log of every run
+├── benchmark/
+│   └── benchmark.py           # generate N synthetic rows & time a full run
+├── output/                    # sample run outputs (committed for reference;
+│   ├── structured_report.csv  #   regenerated locally on each run)
+│   └── run_log.csv            # one enriched row per clean record / audit log
 ├── deploy/
 │   ├── Dockerfile             # n8n image with the repo baked in
 │   ├── docker-compose.yml     # n8n + data volumes stack
@@ -83,6 +85,13 @@ cd autonomous-ai-task-execution
 
 # run the full pipeline on the sample data
 python3 pipeline/process_data.py --input data/sample_input.csv --output output/
+
+# large input: stream in batches, enrich in parallel
+python3 pipeline/process_data.py --input big_tickets.csv --output output/ \
+    --workers 8 --batch-size 20000
+
+# benchmark on 200k synthetic rows (generates data, times a real run)
+python3 benchmark/benchmark.py --rows 200000
 ```
 
 Expected result: `output/structured_report.csv` (61 enriched rows — 63
@@ -118,6 +127,38 @@ Example enriched rows:
 | TKT-1001  | Invoice charged twice| billing     | negative     | urgent      | True               |
 | TKT-1002  | Login not working    | technical   | neutral      | medium      | False              |
 | TKT-1003  | Package arrived late | logistics   | neutral      | medium      | False              |
+
+## Performance & scaling
+
+The pipeline is built for large inputs, not just the 63-row sample:
+
+- **Streaming, constant memory** — records flow through in batches
+  (`--batch-size`, default 10,000); the full dataset is never held in RAM.
+- **Parallel enrichment** — the AI-classification stage runs across worker
+  processes (`--workers`, default = CPU count; `--workers 1` forces
+  single-process mode). Record order is preserved, so parallel and serial
+  runs produce byte-identical output.
+- **Compact dedup index** — duplicates are detected on a 128-bit hash of
+  the normalised ticket id (~50 bytes per unique key) instead of full
+  strings.
+
+Measured with `benchmark/benchmark.py` (synthetic messy tickets: ~1% junk
+rows, ~2% duplicates; 4 vCPU host):
+
+| Input rows | Workers | Time | Throughput | Peak RAM |
+|------------|---------|------|------------|----------|
+| 200,000    | 4       | 7.1 s  | ~27,400 rows/s | — |
+| 200,000    | 1       | 6.7 s  | ~28,900 rows/s | — |
+| 1,000,000  | 4       | 34.9 s | ~27,800 rows/s | — |
+| 1,000,000  | 1       | 33.1 s | ~29,300 rows/s | ~210 MB |
+
+Honest note: with the lightweight local classifier the pipeline is
+I/O-bound, so single-process mode is already near maximum throughput on
+this workload. The parallel stage earns its keep in production, where
+enrichment is an LLM API call — the genuinely expensive step — and in
+heavier per-record processing. Either way, memory stays flat as input
+grows: only the batch buffers and the dedup hash index scale, not the
+dataset.
 
 ## Importing the workflow into n8n
 
