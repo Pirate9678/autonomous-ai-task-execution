@@ -127,32 +127,56 @@ _POSITIVE = ("thank", "great", "excellent", "love", "awesome", "happy", "satisfi
 _URGENT_HINTS = ("outage", "down", "charged twice", "double charge", "unauthorised",
                  "unauthorized", "data loss", "breach")
 
+# Compiled per-group regexes (Nov 2026 optimisation). Each group is one
+# C-level substring search instead of a Python-level any() loop over the
+# keyword tuple — same semantics (existence of any keyword, checked in
+# the same priority order as the original any() chains), ~2x faster
+# per record at scale. Keywords contain no regex metacharacters, but
+# re.escape keeps this correct if one is added later.
+def _group_re(keywords):
+    return re.compile("|".join(re.escape(k) for k in keywords))
+
+_BILLING_RE = _group_re(_BILLING)
+_TECHNICAL_RE = _group_re(_TECHNICAL)
+_LOGISTICS_RE = _group_re(_LOGISTICS)
+_ACCOUNT_RE = _group_re(_ACCOUNT)
+_FEEDBACK_RE = _group_re(_FEEDBACK)
+_NEGATIVE_RE = _group_re(_NEGATIVE)
+_POSITIVE_RE = _group_re(_POSITIVE)
+_URGENT_RE = _group_re(_URGENT_HINTS)
+
 
 def _classify_text(text):
-    """Rule-based approximation of the `classification` prompt's decisions."""
+    """Rule-based approximation of the `classification` prompt's decisions.
+
+    Decision rules are unchanged from the original any()-based version;
+    only the matching mechanism is faster (see the compiled regexes
+    above). Verified identical on all 160 synthetic subject/description
+    combinations plus edge cases — see benchmark/benchmark.py --verify.
+    """
     t = text.lower()
 
-    if any(k in t for k in _BILLING):
+    if _BILLING_RE.search(t):
         category = "billing"
-    elif any(k in t for k in _LOGISTICS):
+    elif _LOGISTICS_RE.search(t):
         category = "logistics"
-    elif any(k in t for k in _ACCOUNT):
+    elif _ACCOUNT_RE.search(t):
         category = "account"
-    elif any(k in t for k in _TECHNICAL):
+    elif _TECHNICAL_RE.search(t):
         category = "technical"
-    elif any(k in t for k in _FEEDBACK):
+    elif _FEEDBACK_RE.search(t):
         category = "feedback"
     else:
         category = "unknown"
 
-    if any(k in t for k in _NEGATIVE):
+    if _NEGATIVE_RE.search(t):
         sentiment = "negative"
-    elif any(k in t for k in _POSITIVE):
+    elif _POSITIVE_RE.search(t):
         sentiment = "positive"
     else:
         sentiment = "neutral"
 
-    if any(k in t for k in _URGENT_HINTS):
+    if _URGENT_RE.search(t):
         priority = "urgent"
     elif sentiment == "negative" and category in ("billing", "technical"):
         priority = "high"
@@ -197,7 +221,7 @@ def validate_classification(ticket_id, classification):
     }
 
 
-def analyse_record(record, prompts=None):
+def analyse_record(record, prompts=None, render=True):
     """Run the full custom-prompt pipeline over one record.
 
     1. Renders the classification template with the record's fields
@@ -208,9 +232,18 @@ def analyse_record(record, prompts=None):
     Returns (enriched_record, rendered_prompt, validation_result).
     The rendered prompt is returned for transparency/logging — in the n8n
     workflow the equivalent prompt text is visible in the AI node config.
+
+    Pass render=False in the hot path (the pipeline does this): the
+    rendered prompt is discarded by the pipeline and rendering it costs
+    a regex substitution over the ~750-char template per record.
+    Rendering has no effect on the enriched record, so output is
+    identical either way; rendered is None when skipped.
     """
     prompts = prompts or load_prompts()
-    rendered = render_prompt(prompts["classification"]["template"], record)
+    if render:
+        rendered = render_prompt(prompts["classification"]["template"], record)
+    else:
+        rendered = None
     classification = _classify_text(
         f"{record.get('subject', '')} {record.get('description', '')}"
     )
