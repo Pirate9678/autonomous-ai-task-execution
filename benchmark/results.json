@@ -1,0 +1,56 @@
+{
+  "1000000_w1_b20000": [
+    {
+      "mode": "csv",
+      "rows_in": 1000000,
+      "rows_out": 970422,
+      "elapsed_s": 19.9,
+      "rows_per_s": 49118,
+      "peak_rss_mb": 155,
+      "workers": 1,
+      "batch_size": 20000,
+      "report_md5": "9e8fc9dbe35cab0e64679f9d8802b249",
+      "csv_db_identical": true
+    },
+    {
+      "mode": "db",
+      "rows_in": 1000000,
+      "rows_out": 970422,
+      "elapsed_s": 20.9,
+      "rows_per_s": 46330,
+      "peak_rss_mb": 224,
+      "workers": 1,
+      "batch_size": 20000,
+      "db_load_s": 7.6,
+      "report_md5": "9e8fc9dbe35cab0e64679f9d8802b249",
+      "csv_db_identical": true
+    }
+  ],
+  "10000000_w1_b20000": [
+    {
+      "mode": "csv",
+      "rows_in": 10000000,
+      "rows_out": 9706318,
+      "elapsed_s": 296.5,
+      "rows_per_s": 32818,
+      "peak_rss_mb": 915,
+      "workers": 1,
+      "batch_size": 20000,
+      "report_md5": "6fdf52bd01769b100c7ec48b5923b880",
+      "csv_db_identical": true
+    },
+    {
+      "mode": "db",
+      "rows_in": 10000000,
+      "rows_out": 9706318,
+      "elapsed_s": 335.1,
+      "rows_per_s": 28966,
+      "peak_rss_mb": 978,
+      "workers": 1,
+      "batch_size": 20000,
+      "db_load_s": 77.0,
+      "report_md5": "6fdf52bd01769b100c7ec48b5923b880",
+      "csv_db_identical": true
+    }
+  ]
+}
