@@ -57,12 +57,15 @@ autonomous-ai-task-execution/
 ├── pipeline/
 │   ├── process_data.py        # the ETL: extract → clean → enrich → load
 │   ├── ai_prompts.py          # prompt rendering + deterministic local classifier
+│   ├── db_io.py               # SQLite helpers: load CSVs, stream tables
 │   └── prompts.yaml           # 4 custom prompt templates (extraction,
 │                              #   classification, summarisation, validation)
 ├── data/
 │   └── sample_input.csv       # 63 messy sample ticket records
 ├── benchmark/
-│   └── benchmark.py           # generate N synthetic rows & time a full run
+│   ├── benchmark.py           # generate N synthetic rows & time a full run
+│   ├── results.json           # measured numbers (see Performance & scaling)
+│   └── tmp/                   # benchmark scratch (gitignored)
 ├── output/                    # sample run outputs (committed for reference;
 │   ├── structured_report.csv  #   regenerated locally on each run)
 │   └── run_log.csv            # one enriched row per clean record / audit log
@@ -92,7 +95,50 @@ python3 pipeline/process_data.py --input big_tickets.csv --output output/ \
 
 # benchmark on 200k synthetic rows (generates data, times a real run)
 python3 benchmark/benchmark.py --rows 200000
+
+# database mode: 1M rows from a SQLite table instead of a CSV
+python3 pipeline/db_io.py load --csv big_tickets.csv --db tickets.db
+python3 pipeline/process_data.py --db tickets.db --workers 1
 ```
+
+## Running against a database
+
+CSV in / CSV out is the default, but for large workloads the pipeline
+can read from and write to a SQLite database instead — no server needed,
+standard library only:
+
+```bash
+# 1. Load raw records into the database (once per dataset)
+python3 pipeline/db_io.py load --csv big_tickets.csv --db tickets.db
+
+# 2. Run the pipeline against the database
+python3 pipeline/process_data.py --db tickets.db --workers 1
+
+# 3. (Optional) dump the report table back to CSV
+python3 pipeline/db_io.py dump --db tickets.db --csv report_from_db.csv
+```
+
+Default tables are `raw_tickets` (input), `structured_report` (output)
+and `run_log` (audit); override with `--db-input-table`,
+`--db-report-table`, `--db-log-table`. The report table is dropped and
+recreated on each run (like the CSV being overwritten); the run log
+appends. Reads stream in `rowid` order and writes commit once per batch,
+so memory stays flat as the database grows. At 10M rows the SQLite file
+is ~2.4 GB with the report table included, and loading 10M rows takes
+~77 s (one-off).
+
+PostgreSQL: the SQL is standard except placeholders (SQLite `?` vs
+PostgreSQL `%s`) and the `INTEGER PRIMARY KEY AUTOINCREMENT` column
+(PostgreSQL: `SERIAL` / `GENERATED ALWAYS AS IDENTITY`). PostgreSQL
+support was **not** tested on this host — SQLite is the only tested
+backend.
+
+The n8n workflow needs no change for database mode: its **Run Python
+Pipeline** node invokes the pipeline in CSV mode, which still works
+exactly as before. To run the workflow against a database instead,
+change that one node's command to
+`python3 pipeline/process_data.py --db /data/tickets.db` (after loading
+the tickets into the DB with `db_io.py load`).
 
 Expected result: `output/structured_report.csv` (61 enriched rows — 63
 records in, 1 junk row and 1 duplicate dropped) and an appended entry in
@@ -139,26 +185,68 @@ The pipeline is built for large inputs, not just the 63-row sample:
   single-process mode). Record order is preserved, so parallel and serial
   runs produce byte-identical output.
 - **Compact dedup index** — duplicates are detected on a 128-bit hash of
-  the normalised ticket id (~50 bytes per unique key) instead of full
-  strings.
+  the normalised ticket id (~90 bytes per unique key in the CPython set)
+  instead of full strings.
 
 Measured with `benchmark/benchmark.py` (synthetic messy tickets: ~1% junk
-rows, ~2% duplicates; 4 vCPU host):
+rows, ~2% duplicates; `--workers 1 --batch-size 20000`; full numbers in
+`benchmark/results.json`). "Before" is the pre-optimisation code run on
+the same host, same input, back-to-back. This host is a shared 1.5-vCPU
+cell, so absolute rows/s vary with load — compare before/after here, not
+against numbers measured on other hosts.
 
-| Input rows | Workers | Time | Throughput | Peak RAM |
-|------------|---------|------|------------|----------|
-| 200,000    | 4       | 7.1 s  | ~27,400 rows/s | — |
-| 200,000    | 1       | 6.7 s  | ~28,900 rows/s | — |
-| 1,000,000  | 4       | 34.9 s | ~27,800 rows/s | — |
-| 1,000,000  | 1       | 33.1 s | ~29,300 rows/s | ~210 MB |
+| Input rows | Mode | Before (Nov 2026) | After (Nov 2026) | Speedup | Peak RAM |
+|------------|------|-------------------|------------------|---------|----------|
+| 1,000,000  | CSV    | 32.6 s (~29,800 rows/s) | **19.8 s (~49,100 rows/s)** | 1.65x | 155 MB |
+| 1,000,000  | SQLite | — (new mode) | **20.9 s (~46,300 rows/s)** | — | 224 MB |
+| 10,000,000 | CSV    | 534.2 s (~18,200 rows/s) | **295.8 s (~32,800 rows/s)** | 1.81x | 915 MB |
+| 10,000,000 | SQLite | — (new mode) | **335.1 s (~29,000 rows/s)** | — | 978 MB |
 
-Honest note: with the lightweight local classifier the pipeline is
-I/O-bound, so single-process mode is already near maximum throughput on
-this workload. The parallel stage earns its keep in production, where
-enrichment is an LLM API call — the genuinely expensive step — and in
-heavier per-record processing. Either way, memory stays flat as input
-grows: only the batch buffers and the dedup hash index scale, not the
-dataset.
+Database-mode runs exclude the one-off CSV→SQLite load (7.6 s at 1M
+rows, 77.0 s at 10M). Output is **byte-identical** before/after at 1M
+and 10M rows (same md5), and CSV mode vs database mode produce
+byte-identical reports at both scales.
+
+What changed in the Nov 2026 optimisation (this round):
+- **Classifier** — keyword matching moved from Python-level `any()`
+  loops to one compiled regex per category/sentiment/priority group
+  (same priority order, same decisions — verified identical on all 160
+  synthetic subject/description combinations; `benchmark.py --verify`).
+- **Prompt rendering skipped in the hot path** — the pipeline discarded
+  the rendered classification prompt, but `analyse_record()` still built
+  it (a regex substitution over the ~750-char template per record).
+  `analyse_record(..., render=False)` skips it; the enriched record is
+  identical.
+- **Normalisation** — `re.sub(r"\s+", " ", ...)` replaced with
+  `" ".join(value.split())`, and the per-value strip in the extract
+  stage removed (the cleaner normalises every field anyway).
+- **Benchmark generator** — no longer builds a list of all N ticket ids
+  (O(N) memory, O(N) per duplicate draw); ids are formatted on the fly.
+  Generation is byte-identical for the same seed and 2.6x faster
+  (200k rows: 2.1 s → 0.8 s); 10M rows generate in ~52 s.
+- **Database mode** — new `--db` flag (SQLite): read from a table, write
+  the report + run log to tables. See "Running against a database".
+
+Honest notes:
+- Memory at 10M rows is dominated by the dedup hash set (~90 bytes per
+  unique key): 907 MB before, 915 MB after. Streaming keeps everything
+  else flat, but the set itself grows with unique keys — at ~100M rows
+  it would need ~9 GB, beyond this host. That is the known scaling
+  ceiling; a disk-backed dedup (e.g. SQLite) would be the next step if
+  that scale is ever needed, at the cost of speed. It was deliberately
+  not implemented here: the in-memory set fits the 10M scale asked for.
+- Database mode is ~5% slower than CSV at 1M rows and ~13% slower at
+  10M, and uses ~70 MB more RAM (page cache). The trade-off buys
+  queryable tables instead of flat files.
+- With the lightweight local classifier the pipeline is CPU-bound on
+  this host, so single-process mode (`--workers 1`) is fastest here.
+  The parallel stage earns its keep in production, where enrichment is
+  an LLM API call — the genuinely expensive step.
+- The 1 Nov 2026 numbers in the previous version of this section
+  (~28k rows/s, 1M rows in ~35s, ~210 MB) were measured on a different,
+  less loaded host; the table above is the current same-host comparison.
+  The 1M "before" figure here (~29,800 rows/s) happens to match it,
+  which is a coincidence of host load, not a reproduced measurement.
 
 ## Importing the workflow into n8n
 

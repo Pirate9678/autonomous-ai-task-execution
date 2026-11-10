@@ -1,6 +1,9 @@
 # Pipeline artefacts (regenerated every run)
 output/*.csv
 
+# Benchmark scratch files (generated inputs/outputs, regenerated per run)
+benchmark/tmp/
+
 # Environment / secrets
 .env
 
